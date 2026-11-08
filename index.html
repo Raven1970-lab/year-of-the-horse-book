@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Noto+Serif+SC:wght@700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=12">
 </head>
 <body>
 <canvas id="bg-canvas"></canvas>
@@ -19,6 +19,7 @@
 
       <div class="page right-page">
         <div class="page-frame">
+          <canvas class="margin-canvas"></canvas>
           <div class="page-content" id="page-right">
             <img src="04.png" alt="Enter the Year of the Horse poster" class="img-top">
             <canvas class="ui-canvas"></canvas>
@@ -30,6 +31,7 @@
       <div class="page left-page-wrapper">
         <div class="page left-page-content">
           <div class="page-frame">
+          <canvas class="margin-canvas"></canvas>
             <div class="page-content" id="page-left">
               <img src="1.png" alt="QR code blessing poster" class="img-top">
               <canvas class="ui-canvas"></canvas>
@@ -41,49 +43,7 @@
 
       <div class="front-cover-wrapper">
         <div class="front-cover-face">
-          <svg class="cover-art" viewBox="0 0 520 727" preserveAspectRatio="none" aria-label="元旦快樂 · 馬 · 2026">
-            <defs>
-              <!-- organic, slightly "tentacled" halftone blobs -->
-              <filter id="ooze" x="-10%" y="-10%" width="120%" height="120%">
-                <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="11" result="n"/>
-                <feDisplacementMap in="SourceGraphic" in2="n" scale="16" xChannelSelector="R" yChannelSelector="G"/>
-              </filter>
-              <filter id="ink" x="-5%" y="-5%" width="110%" height="110%">
-                <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="1" seed="3" result="n"/>
-                <feDisplacementMap in="SourceGraphic" in2="n" scale="3" xChannelSelector="R" yChannelSelector="G"/>
-              </filter>
-              <linearGradient id="field" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0" stop-color="#12e01a"/>
-                <stop offset="0.42" stop-color="#c9f8c2"/>
-                <stop offset="0.5" stop-color="#ffffff"/>
-                <stop offset="1" stop-color="#0c0c0c"/>
-              </linearGradient>
-              <pattern id="grain" width="3" height="3" patternUnits="userSpaceOnUse">
-                <rect width="1" height="1" fill="#000" opacity="0.18"/>
-              </pattern>
-            </defs>
-
-            <rect width="520" height="727" fill="#f3f1ea"/>
-            <g id="blobs" fill="#0a0a0a" filter="url(#ooze)"></g>
-
-            <rect x="96" y="150" width="346" height="452" fill="url(#field)"/>
-            <rect x="96" y="150" width="346" height="452" fill="url(#grain)"/>
-            <text x="300" y="520" text-anchor="middle" font-family="'Noto Serif SC', 'Songti SC', serif" font-size="330" font-weight="900" fill="#0a0a0a" filter="url(#ink)">馬</text>
-
-            <g font-family="'Noto Serif SC', 'Songti SC', serif" font-weight="900" font-size="46" fill="#ff1e14" stroke="#ffe500" stroke-width="2.4" paint-order="stroke" text-anchor="middle">
-              <text x="58" y="212">元</text>
-              <text x="58" y="264">旦</text>
-              <text x="58" y="316">快</text>
-              <text x="58" y="368">樂</text>
-            </g>
-            <g font-family="'Helvetica Neue', 'Arial Black', Arial, sans-serif" font-weight="800" fill="#ff1e14" stroke="#ffe500" stroke-width="1.6" paint-order="stroke">
-              <text x="96" y="96" font-size="34" letter-spacing="-0.5">FORM—01/01</text>
-              <text x="96" y="134" font-size="34">2026</text>
-              <text x="442" y="648" font-size="21" text-anchor="end">NEW YEAR BEGINS</text>
-              <text x="442" y="674" font-size="21" text-anchor="end">RESTART</text>
-              <text font-size="13" letter-spacing="1.5" transform="translate(84 160) rotate(90)">ENTER THE YEAR OF THE HORSE</text>
-            </g>
-          </svg>
+          <canvas class="cover-art" id="cover-canvas" aria-label="元旦快樂 · 馬 · 2026"></canvas>
           
         </div>
         <div class="front-cover-inside"></div>
@@ -93,8 +53,8 @@
   </div>
 </div>
 <p class="hint">Hover the book to open · move across a page to scan</p>
-<script src="horse.js"></script>
-<script src="script.js"></script>
-<script src="background.js"></script>
+<script src="horse.js?v=12"></script>
+<script src="script.js?v=12"></script>
+<script src="background.js?v=12"></script>
 </body>
 </html>

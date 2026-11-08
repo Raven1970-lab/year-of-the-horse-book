@@ -8,27 +8,142 @@ const CELL_W = 5, CELL_H = 8;
 const MONO = '"SF Mono", "Menlo", "Courier New", monospace';
 const RED = '#e0261b';
 const INK = '#111';
+const MARGIN = 30; // must match .page-frame padding
 
 const pad = (n, l = 4) => String(Math.max(0, Math.floor(n))).padStart(l, '0');
 const hex = (n) => (n >>> 0).toString(16).toUpperCase().padStart(4, '0');
 
-// cover halftone blobs (seeded, so the cover is the same on every load)
-(function buildBlobs() {
-  const g = document.getElementById('blobs');
-  if (!g) return;
-  let seed = 20260101;
-  const rnd = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
-  const ns = 'http://www.w3.org/2000/svg';
-  const inPanel = (x, y, r) => x + r > 84 && x - r < 454 && y + r > 138 && y - r < 614;
-  for (let i = 0; i < 420; i++) {
-    const x = rnd() * 540 - 10, y = rnd() * 747 - 10;
-    const r = 3 + Math.pow(rnd(), 2.2) * 30;
-    if (inPanel(x, y, r)) continue;
-    const c = document.createElementNS(ns, 'circle');
-    c.setAttribute('cx', x.toFixed(1)); c.setAttribute('cy', y.toFixed(1)); c.setAttribute('r', r.toFixed(1));
-    g.appendChild(c);
-  }
-})();
+// ---------- cover: generated halftone ----------
+// Everything on the cover is drawn by code: a dot grid whose sizes come from
+// drifting metaballs (the oozing black blobs) and from a mask of 馬, so the
+// character itself is made of dots. Type is set on a different grid from the
+// posters inside.
+const Cover = {
+  canvas: document.getElementById('cover-canvas'),
+  balls: [],
+  mask: null,
+  last: 0,
+  init() {
+    if (!this.canvas) return;
+    this.ctx = this.canvas.getContext('2d');
+    let seed = 20260101;
+    const rnd = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
+    for (let i = 0; i < 22; i++) {
+      const a = rnd() * Math.PI * 2;
+      this.balls.push({
+        x: 260 + Math.cos(a) * (215 + rnd() * 90), y: 363 + Math.sin(a) * (300 + rnd() * 90),
+        r: 18 + rnd() * 28, vx: (rnd() - 0.5) * 0.25, vy: (rnd() - 0.5) * 0.25, ph: rnd() * 6.28,
+      });
+    }
+    const ready = document.fonts && document.fonts.load ? document.fonts.load('900 300px "Noto Serif SC"', '馬') : Promise.resolve();
+    ready.catch(() => {}).then(() => { this.resize(); });
+    window.addEventListener('resize', () => this.resize());
+  },
+  resize() {
+    const r = this.canvas.getBoundingClientRect();
+    const w = this.canvas.offsetWidth || r.width, h = this.canvas.offsetHeight || r.height;
+    if (!w) return;
+    this.canvas.width = Math.round(w * DPR);
+    this.canvas.height = Math.round(h * DPR);
+    this.k = (w / 520) * DPR; // virtual 520 x 727 units -> device px
+    this.pitch = 9;
+    this.cols = Math.ceil(520 / this.pitch) + 1;
+    this.rows = Math.ceil(727 / this.pitch) + 1;
+    // glyph mask sampled on the dot grid
+    const m = document.createElement('canvas');
+    m.width = this.cols; m.height = this.rows;
+    const mc = m.getContext('2d');
+    mc.scale(1 / this.pitch, 1 / this.pitch);
+    mc.fillStyle = '#000';
+    mc.textAlign = 'center';
+    mc.textBaseline = 'middle';
+    mc.font = '900 360px "Noto Serif SC", "Songti SC", serif';
+    mc.fillText('馬', 266, 335);
+    const d = mc.getImageData(0, 0, this.cols, this.rows).data;
+    this.mask = new Float32Array(this.cols * this.rows);
+    for (let i = 0; i < this.mask.length; i++) this.mask[i] = d[i * 4 + 3] / 255;
+    this.draw(performance.now(), true);
+  },
+  draw(t, force) {
+    if (!this.mask || (!force && t - this.last < 50)) return; // ~20 fps is plenty
+    this.last = t;
+    const c = this.ctx, k = this.k, P = this.pitch;
+    c.setTransform(k, 0, 0, k, 0, 0);
+    c.fillStyle = '#f3f1ea';
+    c.fillRect(0, 0, 520, 727);
+
+    this.balls.forEach(b => {
+      b.x += b.vx; b.y += b.vy;
+      if (b.x < -40 || b.x > 560) b.vx *= -1;
+      if (b.y < -40 || b.y > 767) b.vy *= -1;
+    });
+    const tt = t / 1000;
+    const BAND0 = 600, BAND1 = 634;
+    for (let j = 0; j < this.rows; j++) {
+      const y = j * P;
+      if (y > BAND0 - P / 2 && y < BAND1 + P / 2) continue;
+      for (let i = 0; i < this.cols; i++) {
+        const x = i * P;
+        let F = 0;
+        for (const b of this.balls) {
+          const rr = b.r * (1 + 0.18 * Math.sin(tt * 0.9 + b.ph));
+          const dx = x - b.x, dy = y - b.y;
+          F += (rr * rr) / (dx * dx + dy * dy + 1);
+        }
+        const g = this.mask[j * this.cols + i];
+        let r;
+        if (g > 0.05) {
+          r = P * 0.5 * (0.35 + 0.62 * g);
+        } else {
+          // keep a clear field around 馬; blobs creep in from the edges only
+          const dc = Math.hypot((x - 266) / 1.0, (y - 335) / 1.25);
+          const edge = Math.min(1, Math.max(0, (dc - 170) / 70));
+          const blob = Math.min(1, Math.max(0, (F - 0.7) * 1.5)) * edge;
+          r = blob > 0 ? P * 0.62 * blob : 0.7; // blobs swell and merge; elsewhere a fine dot grid
+        }
+        if (r < 0.4) continue;
+        c.fillStyle = '#0a0a0a';
+        c.beginPath();
+        c.arc(x, y, r, 0, 6.2832);
+        c.fill();
+      }
+    }
+
+    // green band with a slowly running line of type
+    c.fillStyle = '#14e01b';
+    c.fillRect(0, BAND0, 520, BAND1 - BAND0);
+    c.save();
+    c.beginPath(); c.rect(0, BAND0, 520, BAND1 - BAND0); c.clip();
+    c.fillStyle = '#0a0a0a';
+    c.font = '800 13px "Helvetica Neue", Arial, sans-serif';
+    c.textBaseline = 'middle';
+    const line = 'ENTER THE YEAR OF THE HORSE  ●  THE HORSE MOVES FIRST  ●  NEW YEAR BEGINS  ●  RESTART  ●  ';
+    const lw = c.measureText(line).width;
+    const off = -((t * 0.02) % lw);
+    for (let x = off; x < 520; x += lw) c.fillText(line, x, (BAND0 + BAND1) / 2 + 1);
+    c.restore();
+
+    // type: red with a yellow edge, horizontal, set on its own grid
+    c.lineJoin = 'round';
+    const stamp = (txt, x, y, font, align, sw) => {
+      c.font = font; c.textAlign = align; c.textBaseline = 'alphabetic';
+      c.strokeStyle = '#ffe500'; c.lineWidth = sw; c.strokeText(txt, x, y);
+      c.fillStyle = '#ff1e14'; c.fillText(txt, x, y);
+    };
+    stamp('元 旦 快 樂', 260, 92, '900 58px "Noto Serif SC", "Songti SC", serif', 'center', 6);
+    const label = (txt, x, y, font, align) => {
+      c.font = font; c.textAlign = align; c.textBaseline = 'alphabetic';
+      const w = c.measureText(txt).width, x0 = align === 'right' ? x - w : x;
+      c.fillStyle = '#f3f1ea'; c.fillRect(x0 - 4, y - 14, w + 8, 19);
+      c.fillStyle = '#0a0a0a'; c.fillText(txt, x, y);
+    };
+    label('FORM 01/01', 30, 128, '700 13px "Helvetica Neue", Arial, sans-serif', 'left');
+    label('YEAR OF THE HORSE', 490, 128, '700 13px "Helvetica Neue", Arial, sans-serif', 'right');
+    stamp('2026', 490, 704, '900 64px "Helvetica Neue", "Arial Black", Arial, sans-serif', 'right', 5);
+    label('丙午', 30, 674, '900 24px "Noto Serif SC", "Songti SC", serif', 'left');
+    label('一馬當先 · 萬象更新', 30, 698, '700 12px "Noto Serif SC", "Songti SC", serif', 'left');
+  },
+};
 
 class Page {
   constructor(id, side) {
@@ -36,6 +151,9 @@ class Page {
     this.container = document.getElementById(id);
     this.img = this.container.querySelector('.img-top');
     this.canvas = this.container.querySelector('.ui-canvas');
+    this.frameEl = this.container.parentElement;
+    this.mcanvas = this.frameEl.querySelector('.margin-canvas');
+    this.mctx = this.mcanvas.getContext('2d');
     this.ctx = this.canvas.getContext('2d');
     this.w = 0; this.h = 0;
     this.frames = [];
@@ -50,6 +168,8 @@ class Page {
     this.h = this.container.offsetHeight;
     this.canvas.width = Math.round(this.w * DPR);
     this.canvas.height = Math.round(this.h * DPR);
+    this.fw = this.frameEl.offsetWidth; this.fh = this.frameEl.offsetHeight;
+    this.mcanvas.width = Math.round(this.fw * DPR); this.mcanvas.height = Math.round(this.fh * DPR);
     this.cols = Math.ceil(this.w / CELL_W);
     this.rows = Math.ceil(this.h / CELL_H);
     this.buildAscii();
@@ -132,6 +252,7 @@ class Page {
       }
     }
     const clipX = Math.max(0, Math.min(x, W));
+    this.drawMargin(showUI, t, clipX);
 
     // ---- ASCII side ----
     if (clipX < W && this.frames.length) {
@@ -163,6 +284,52 @@ class Page {
     this.drawHud(ctx, x, y, clipX, t, this.boxes[Math.floor(t / window.HORSE_SHEET.ms) % this.boxes.length]);
   }
 
+  // Decoration lives on the blank page margin around the poster, never on it.
+  drawMargin(active, t, clipX) {
+    const c = this.mctx, W = this.fw, H = this.fh;
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    c.clearRect(0, 0, this.mcanvas.width, this.mcanvas.height);
+    if (!active || !W) return;
+    c.setTransform(DPR, 0, 0, DPR, 0, 0);
+    const M = MARGIN, ink = 'rgba(17,17,17,0.78)';
+    c.strokeStyle = ink; c.fillStyle = ink; c.lineWidth = 1;
+    c.font = `600 8px ${MONO}`; c.textBaseline = 'middle';
+    const outer = this.side === 'left' ? 'left' : 'right';
+    // corner ticks just outside the poster
+    const L = 9, g = 5;
+    [[M - g, M - g, -1, -1], [W - M + g, M - g, 1, -1], [M - g, H - M + g, -1, 1], [W - M + g, H - M + g, 1, 1]].forEach(([x, y, sx, sy]) => {
+      c.beginPath(); c.moveTo(x, y - L * sy); c.lineTo(x, y); c.lineTo(x - L * sx, y); c.stroke();
+    });
+    const blink = Math.floor(t / 400) % 2 === 0;
+    c.textAlign = 'left';
+    c.fillText('FORM-01/01 · CH.' + (this.side === 'right' ? '02' : '01'), M, M / 2);
+    c.textAlign = 'right';
+    c.fillText('REC', W - M, M / 2);
+    if (blink) { c.fillStyle = RED; c.beginPath(); c.arc(W - M - 22, M / 2, 2.5, 0, 7); c.fill(); c.fillStyle = ink; }
+    c.textAlign = 'left';
+    c.fillText(`FR ${pad(t / 16.67, 6)}`, M, H - M / 2);
+    c.textAlign = 'right';
+    c.fillText(`SCAN ${(100 - (clipX / this.w) * 100).toFixed(1).padStart(5, '0')}%`, W - M, H - M / 2);
+    // outer margin: ruler + scrolling hex
+    const ox = outer === 'left' ? M / 2 : W - M / 2;
+    for (let y = M; y <= H - M; y += 10) {
+      const big = (y - M) % 50 === 0;
+      const len = big ? 6 : 3;
+      const x0 = outer === 'left' ? M - g : W - M + g;
+      c.beginPath(); c.moveTo(x0, y + 0.5); c.lineTo(x0 + (outer === 'left' ? -len : len), y + 0.5); c.stroke();
+    }
+    c.save();
+    c.translate(ox, H / 2);
+    c.rotate(outer === 'left' ? -Math.PI / 2 : Math.PI / 2);
+    c.textAlign = 'center';
+    const off = Math.floor(t / 160);
+    let line = '';
+    for (let i = 0; i < 12; i++) line += this.hexCol[(i + off) % this.hexCol.length] + ' ';
+    c.globalAlpha = 0.55;
+    c.fillText(line.trim(), 0, outer === 'left' ? -4 : -4);
+    c.restore();
+  }
+
   drawHud(ctx, x, y, clipX, t, box) {
     const W = this.w, H = this.h;
     const blink = Math.floor(t / 400) % 2 === 0;
@@ -171,27 +338,7 @@ class Page {
     ctx.textBaseline = 'top';
     ctx.lineWidth = 1;
 
-    // page frame brackets + labels
     ctx.strokeStyle = INK; ctx.fillStyle = INK;
-    const m = 8, L = 14;
-    [[m, m, 1, 1], [W - m, m, -1, 1], [m, H - m, 1, -1], [W - m, H - m, -1, -1]].forEach(([bx, by, sx, sy]) => {
-      ctx.beginPath(); ctx.moveTo(bx, by + L * sy); ctx.lineTo(bx, by); ctx.lineTo(bx + L * sx, by); ctx.stroke();
-    });
-    if (clipX < W) {
-      const rx = Math.max(clipX + 6, W - 120);
-      ctx.fillText(`REC`, W - 40, 14);
-      if (blink) { ctx.fillStyle = RED; ctx.beginPath(); ctx.arc(W - 46, 18, 3, 0, 7); ctx.fill(); ctx.fillStyle = INK; }
-      ctx.fillText(`FR ${pad(t / 16.67, 6)}`, rx, H - 22);
-      // scrolling hex column
-      const off = Math.floor(t / 120);
-      ctx.globalAlpha = 0.55;
-      for (let i = 0; i < 22; i++) {
-        const v = this.hexCol[(i + off) % this.hexCol.length];
-        if (W - 34 > clipX) ctx.fillText(v, W - 34, 36 + i * 11);
-      }
-      ctx.globalAlpha = 1;
-    }
-    ctx.fillText('FORM-01/01 · CH.' + (this.side === 'right' ? '02' : '01'), 14, 14);
 
     // ruler on the scan line
     if (x >= 0 && x <= W) {
@@ -322,12 +469,14 @@ const App = {
     if (!img || !img.naturalWidth) return;
     const aspect = img.naturalWidth / img.naturalHeight;
     const vw = window.innerWidth, vh = window.innerHeight;
-    let h = vh * 0.76, w = h * aspect * 2;
-    if (w > vw * 0.9) { w = vw * 0.9; h = w / (aspect * 2); }
+    const m2 = MARGIN * 2;
+    let h = vh * 0.78, w = ((h - m2) * aspect + m2) * 2;
+    if (w > vw * 0.92) { w = vw * 0.92; h = (w / 2 - m2) / aspect + m2; }
     this.wrapper.style.width = `${w}px`;
     this.wrapper.style.height = `${h}px`;
     this.layout = { cx: vw / 2, cy: vh / 2, w, h };
     this.pages.forEach(p => p.resize());
+    Cover.resize && Cover.ctx && Cover.resize();
   },
 
   hitTest(mx, my) {
@@ -361,6 +510,7 @@ const App = {
       if (want) this.uiTimer = setTimeout(() => { this.uiReady = true; }, 700);
     }
 
+    if (!this.isOpen) Cover.draw(t);
     let overMedia = false;
     const show = this.isOpen && this.uiReady;
     this.pages.forEach(p => {
@@ -372,4 +522,5 @@ const App = {
   },
 };
 
+Cover.init();
 App.init();
