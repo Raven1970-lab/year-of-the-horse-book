@@ -187,7 +187,7 @@ class Page {
     const data = sc.getImageData(0, 0, cols, rows).data;
     ctx.font = `bold ${CELL_H + 1}px ${MONO}`;
     ctx.textBaseline = 'top';
-    ctx.fillStyle = RED;
+    ctx.fillStyle = INK;
     const startCol = Math.max(0, Math.floor(clipX / CELL_W));
     let minX = 1e9, minY = 1e9, maxX = -1, maxY = -1;
     const tick = Math.floor(t / 90);
@@ -251,141 +251,51 @@ class Page {
       ctx.beginPath(); ctx.rect(0, 0, clipX, H); ctx.clip();
       ctx.drawImage(this.img, 0, 0, W, H);
       // glitch slices when the scan line moves fast
-      if (glitch > 0.15) {
-        const n = 2 + Math.floor(glitch * 6);
+      if (glitch > 0.35) {
+        const n = 1 + Math.floor(glitch * 3);
         for (let i = 0; i < n; i++) {
           const sy = Math.random() * H, sh = 3 + Math.random() * 16;
-          const dx = (Math.random() - 0.5) * 40 * glitch;
+          const dx = (Math.random() - 0.5) * 14 * glitch;
           const iw = this.img.naturalWidth, ih = this.img.naturalHeight;
           ctx.drawImage(this.img, 0, sy / H * ih, iw, sh / H * ih, dx, sy, W, sh);
-          ctx.fillStyle = i % 2 ? 'rgba(224,38,27,0.25)' : 'rgba(0,200,255,0.18)';
-          ctx.fillRect(dx, sy, W, sh);
         }
       }
       ctx.restore();
     }
 
     if (!showUI) return;
-    this.drawHud(ctx, x, y, clipX, t, box);
+    this.drawHud(ctx, x, y);
   }
 
-  drawHud(ctx, x, y, clipX, t, box) {
-    const W = this.w, H = this.h;
-    const blink = Math.floor(t / 400) % 2 === 0;
-    ctx.save();
-    ctx.font = `600 9px ${MONO}`;
-    ctx.textBaseline = 'top';
-    ctx.lineWidth = 1;
-
-    // page frame brackets + labels
-    ctx.strokeStyle = INK; ctx.fillStyle = INK;
-    const m = 8, L = 14;
-    [[m, m, 1, 1], [W - m, m, -1, 1], [m, H - m, 1, -1], [W - m, H - m, -1, -1]].forEach(([bx, by, sx, sy]) => {
-      ctx.beginPath(); ctx.moveTo(bx, by + L * sy); ctx.lineTo(bx, by); ctx.lineTo(bx + L * sx, by); ctx.stroke();
-    });
-    if (clipX < W) {
-      const rx = Math.max(clipX + 6, W - 120);
-      ctx.fillText(`REC`, W - 40, 14);
-      if (blink) { ctx.fillStyle = RED; ctx.beginPath(); ctx.arc(W - 46, 18, 3, 0, 7); ctx.fill(); ctx.fillStyle = INK; }
-      ctx.fillText(`FR ${pad(t / 16.67, 6)}`, rx, H - 22);
-      // scrolling hex column
-      const off = Math.floor(t / 120);
-      ctx.globalAlpha = 0.55;
-      for (let i = 0; i < 22; i++) {
-        const v = this.hexCol[(i + off) % this.hexCol.length];
-        if (W - 34 > clipX) ctx.fillText(v, W - 34, 36 + i * 11);
-      }
-      ctx.globalAlpha = 1;
-    }
-    ctx.fillText('FORM-01/01 · CH.' + (this.horseDelay ? '02' : '01'), 14, 14);
-
-    // ruler on the scan line
-    if (x >= 0 && x <= W) {
-      ctx.beginPath();
-      ctx.moveTo(x + 0.5, 0); ctx.lineTo(x + 0.5, H); ctx.stroke();
-      for (let yy = 0; yy < H; yy += 10) {
-        const big = yy % 50 === 0;
-        ctx.beginPath(); ctx.moveTo(x + 0.5, yy); ctx.lineTo(x + (big ? 8 : 4), yy); ctx.stroke();
-        if (yy % 100 === 0 && yy) ctx.fillText(pad(yy, 3), x + 10, yy - 4);
-      }
-    }
-
-    // target box on the ASCII horse
-    if (box && box.x + box.w > clipX) {
-      const bx = Math.max(box.x, clipX) - 6, by = box.y - 6, bw = box.x + box.w - Math.max(box.x, clipX) + 12, bh = box.h + 12;
-      ctx.strokeStyle = RED; ctx.fillStyle = RED;
-      const c = 10;
-      [[bx, by, 1, 1], [bx + bw, by, -1, 1], [bx, by + bh, 1, -1], [bx + bw, by + bh, -1, -1]].forEach(([px, py, sx, sy]) => {
-        ctx.beginPath(); ctx.moveTo(px, py + c * sy); ctx.lineTo(px, py); ctx.lineTo(px + c * sx, py); ctx.stroke();
-      });
-      ctx.setLineDash([2, 3]);
-      ctx.strokeRect(bx + 0.5, by + 0.5, bw, bh);
-      ctx.setLineDash([]);
-      const vel = 58 + Math.sin(t / 300) * 6;
-      const lx = Math.min(bx, W - 120), ly = Math.max(by - 34, 4);
-      ctx.fillRect(lx, ly, 112, 13);
-      ctx.fillStyle = '#fff';
-      ctx.fillText('TARGET 馬 / HORSE-01', lx + 4, ly + 2);
-      ctx.fillStyle = RED;
-      ctx.fillText(`VEL ${vel.toFixed(1)} KM/H  CONF 0.9${Math.floor(t / 200) % 10}`, lx, ly + 16);
-    }
-
-    this.drawReticle(ctx, x, y, clipX, t);
-    ctx.restore();
-  }
-
-  // scan reticle: ring + rotating ticks + crosshair gaps + direction chevrons + readout
-  drawReticle(ctx, x, y, clipX, t) {
+  // Minimal overlay: one hairline scan line + the original reticle
+  // (black disc, two white triangles), drawn crisply. No HUD clutter.
+  drawHud(ctx, x, y) {
     const W = this.w, H = this.h;
     if (x < -40 || x > W + 40) return;
-    const R = 22, rot = t / 1400;
     ctx.save();
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(Math.round(x) + 0.5, 0);
+    ctx.lineTo(Math.round(x) + 0.5, H);
+    ctx.stroke();
+
+    const R = 29.4, base = 40.5, gap = 3.75;
+    const th = (base / 2) / Math.tan(Math.PI / 3);
     ctx.translate(x, y);
-    ctx.strokeStyle = INK; ctx.fillStyle = INK;
-
-    // solid disc keeps the original black-dot language, but thinner + precise
-    ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(17,17,17,0.9)'; ctx.fill();
-
-    // rotating tick ring
-    ctx.strokeStyle = INK; ctx.lineWidth = 1;
-    for (let i = 0; i < 36; i++) {
-      const a = rot + (i / 36) * Math.PI * 2;
-      const r1 = R + 4, r2 = R + (i % 9 === 0 ? 11 : 7);
-      ctx.beginPath(); ctx.moveTo(Math.cos(a) * r1, Math.sin(a) * r1); ctx.lineTo(Math.cos(a) * r2, Math.sin(a) * r2); ctx.stroke();
-    }
-    // outer arcs (counter-rotating, broken)
-    ctx.lineWidth = 1.5;
-    for (let i = 0; i < 4; i++) {
-      const a0 = -rot * 1.6 + i * Math.PI / 2;
-      ctx.beginPath(); ctx.arc(0, 0, R + 16, a0, a0 + Math.PI / 4); ctx.stroke();
-    }
-
-    // crosshair with centre gap (white on the disc)
-    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(0, -R + 4); ctx.lineTo(0, -5); ctx.moveTo(0, 5); ctx.lineTo(0, R - 4);
-    ctx.stroke();
-    // chevrons pointing left / right (drag direction)
-    ctx.lineWidth = 2; ctx.lineJoin = 'miter';
-    ctx.beginPath();
-    ctx.moveTo(-6, -6); ctx.lineTo(-12, 0); ctx.lineTo(-6, 6);
-    ctx.moveTo(6, -6); ctx.lineTo(12, 0); ctx.lineTo(6, 6);
-    ctx.stroke();
-    ctx.fillStyle = RED;
-    ctx.fillRect(-1.5, -1.5, 3, 3);
-
-    // readout box
-    const pct = (clipX / W) * 100;
-    const tx = x > W - 130 ? -R - 128 : R + 18, ty = -R - 14;
+    ctx.arc(0, 0, R, 0, Math.PI * 2);
     ctx.fillStyle = INK;
-    ctx.fillRect(tx, ty, 108, 13);
+    ctx.fill();
     ctx.fillStyle = '#fff';
-    ctx.font = `600 9px ${MONO}`;
-    ctx.fillText(`SCAN ${pct.toFixed(1).padStart(5, '0')}%`, tx + 4, ty + 2);
-    ctx.fillStyle = INK;
-    ctx.fillText(`X ${pad(x)}  Y ${pad(y)}`, tx, ty + 16);
-    ctx.fillText(`ASCII ▸ ${this.cols}×${this.rows}`, tx, ty + 27);
+    [-1, 1].forEach((d) => {
+      ctx.beginPath();
+      ctx.moveTo(d * gap, -base / 2);
+      ctx.lineTo(d * gap, base / 2);
+      ctx.lineTo(d * (gap + th), 0);
+      ctx.closePath();
+      ctx.fill();
+    });
     ctx.restore();
   }
 }
