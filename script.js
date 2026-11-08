@@ -45,7 +45,12 @@ const Cover = {
     if (!w) return;
     this.canvas.width = Math.round(w * DPR);
     this.canvas.height = Math.round(h * DPR);
-    this.k = (w / 520) * DPR; // virtual 520 x 727 units -> device px
+    // Fixed 520 x 727 design, scaled uniformly and centred, so the layout
+    // never changes with the window; extra space is just more dot field.
+    const kc = Math.min(w / 520, h / 727);
+    this.k = kc * DPR;
+    this.ox = (w / kc - 520) / 2;
+    this.oy = (h / kc - 727) / 2;
     this.pitch = 9;
     this.cols = Math.ceil(520 / this.pitch) + 1;
     this.rows = Math.ceil(727 / this.pitch) + 1;
@@ -68,9 +73,10 @@ const Cover = {
     if (!this.mask || (!force && t - this.last < 50)) return; // ~20 fps is plenty
     this.last = t;
     const c = this.ctx, k = this.k, P = this.pitch;
-    c.setTransform(k, 0, 0, k, 0, 0);
+    const ox = this.ox, oy = this.oy;
+    c.setTransform(k, 0, 0, k, ox * k, oy * k);
     c.fillStyle = '#f3f1ea';
-    c.fillRect(0, 0, 520, 727);
+    c.fillRect(-ox - 1, -oy - 1, 522 + ox * 2, 729 + oy * 2);
 
     this.balls.forEach(b => {
       b.x += b.vx; b.y += b.vy;
@@ -79,10 +85,12 @@ const Cover = {
     });
     const tt = t / 1000;
     const BAND0 = 556, BAND1 = 588;
-    for (let j = 0; j < this.rows; j++) {
+    const j0 = Math.floor(-oy / P) - 1, j1 = Math.ceil((727 + oy) / P) + 1;
+    const i0 = Math.floor(-ox / P) - 1, i1 = Math.ceil((520 + ox) / P) + 1;
+    for (let j = j0; j <= j1; j++) {
       const y = j * P;
       if (y > BAND0 - P / 2 && y < BAND1 + P / 2) continue;
-      for (let i = 0; i < this.cols; i++) {
+      for (let i = i0; i <= i1; i++) {
         const x = i * P;
         let F = 0;
         for (const b of this.balls) {
@@ -90,7 +98,7 @@ const Cover = {
           const dx = x - b.x, dy = y - b.y;
           F += (rr * rr) / (dx * dx + dy * dy + 1);
         }
-        const g = this.mask[j * this.cols + i];
+        const g = (i >= 0 && j >= 0 && i < this.cols && j < this.rows) ? this.mask[j * this.cols + i] : 0;
         let r;
         if (g > 0.05) {
           r = P * 0.5 * (0.35 + 0.62 * g);
@@ -111,16 +119,16 @@ const Cover = {
 
     // green band with a slowly running line of type
     c.fillStyle = '#14e01b';
-    c.fillRect(0, BAND0, 520, BAND1 - BAND0);
+    c.fillRect(-ox - 1, BAND0, 522 + ox * 2, BAND1 - BAND0);
     c.save();
-    c.beginPath(); c.rect(0, BAND0, 520, BAND1 - BAND0); c.clip();
+    c.beginPath(); c.rect(-ox - 1, BAND0, 522 + ox * 2, BAND1 - BAND0); c.clip();
     c.fillStyle = '#0a0a0a';
     c.font = '800 13px "Helvetica Neue", Arial, sans-serif';
     c.textBaseline = 'middle';
     const line = 'ENTER THE YEAR OF THE HORSE  ●  THE HORSE MOVES FIRST  ●  NEW YEAR BEGINS  ●  RESTART  ●  ';
     const lw = c.measureText(line).width;
     const off = -((t * 0.02) % lw);
-    for (let x = off; x < 520; x += lw) c.fillText(line, x, (BAND0 + BAND1) / 2 + 1);
+    for (let x = off - ox - lw; x < 520 + ox; x += lw) c.fillText(line, x, (BAND0 + BAND1) / 2 + 1);
     c.restore();
 
     // type: red with a yellow edge, horizontal, set on its own grid
@@ -132,9 +140,10 @@ const Cover = {
     };
     stamp('元 旦 快 樂', 260, 92, '900 58px "Noto Serif SC", "Songti SC", serif', 'center', 6);
     const label = (txt, x, y, font, align) => {
+      const fs = parseFloat(font.split(' ')[1]);
       c.font = font; c.textAlign = align; c.textBaseline = 'alphabetic';
       const w = c.measureText(txt).width, x0 = align === 'right' ? x - w : x;
-      c.fillStyle = '#f3f1ea'; c.fillRect(x0 - 4, y - 14, w + 8, 19);
+      c.fillStyle = '#f3f1ea'; c.fillRect(x0 - fs * 0.3, y - fs * 1.0, w + fs * 0.6, fs * 1.3);
       c.fillStyle = '#0a0a0a'; c.fillText(txt, x, y);
     };
     label('FORM 01/01', 30, 128, '700 13px "Helvetica Neue", Arial, sans-serif', 'left');
