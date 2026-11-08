@@ -78,7 +78,7 @@ const Cover = {
       if (b.y < -40 || b.y > 767) b.vy *= -1;
     });
     const tt = t / 1000;
-    const BAND0 = 600, BAND1 = 634;
+    const BAND0 = 556, BAND1 = 588;
     for (let j = 0; j < this.rows; j++) {
       const y = j * P;
       if (y > BAND0 - P / 2 && y < BAND1 + P / 2) continue;
@@ -139,9 +139,9 @@ const Cover = {
     };
     label('FORM 01/01', 30, 128, '700 13px "Helvetica Neue", Arial, sans-serif', 'left');
     label('YEAR OF THE HORSE', 490, 128, '700 13px "Helvetica Neue", Arial, sans-serif', 'right');
-    stamp('2026', 490, 704, '900 64px "Helvetica Neue", "Arial Black", Arial, sans-serif', 'right', 5);
-    label('丙午', 30, 674, '900 24px "Noto Serif SC", "Songti SC", serif', 'left');
-    label('一馬當先 · 萬象更新', 30, 698, '700 12px "Noto Serif SC", "Songti SC", serif', 'left');
+    stamp('2026', 490, 676, '900 64px "Helvetica Neue", "Arial Black", Arial, sans-serif', 'right', 5);
+    label('丙午', 30, 640, '900 24px "Noto Serif SC", "Songti SC", serif', 'left');
+    label('一馬當先 · 萬象更新', 30, 664, '700 12px "Noto Serif SC", "Songti SC", serif', 'left');
   },
 };
 
