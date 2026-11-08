@@ -63,7 +63,7 @@ html, body {
   top: -1.2%;
   bottom: -1.2%;
   width: 51%;
-  background: #14201b;
+  background: #0b0b0b;
   border-radius: 3px;
 }
 .back-cover {
@@ -78,7 +78,7 @@ html, body {
   left: 50%;
   width: 18px;
   margin-left: -9px;
-  background: linear-gradient(to right, #0b120f, #22332b 45%, #2b3f35 55%, #0b120f);
+  background: linear-gradient(to right, #050505, #1c1c1c 45%, #262626 55%, #050505);
   transform: translateZ(-2px);
 }
 
@@ -206,7 +206,7 @@ html, body {
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
   border-radius: 4px 2px 2px 4px;
-  background: #14201b;
+  background: #0b0b0b;
   box-shadow: 0 30px 60px rgba(20, 30, 40, 0.45), 0 8px 18px rgba(20, 30, 40, 0.35);
 }
 
@@ -217,7 +217,7 @@ html, body {
   border-radius: 2px 4px 4px 2px;
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
-  background: #14201b;
+  background: #0b0b0b;
   box-shadow: inset 2px 0 0 rgba(255, 255, 255, 0.05), inset -1px -1px 0 rgba(0, 0, 0, 0.5);
 }
 
@@ -240,7 +240,7 @@ html, body {
   width: 5px;
   transform-origin: right center;
   transform: rotateY(90deg);
-  background: linear-gradient(#1c2b24, #0c1410);
+  background: linear-gradient(#1a1a1a, #050505);
 }
 
 .hint {

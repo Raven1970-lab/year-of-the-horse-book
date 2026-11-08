@@ -41,101 +41,50 @@
 
       <div class="front-cover-wrapper">
         <div class="front-cover-face">
-          <svg class="cover-art" viewBox="0 0 520 727" preserveAspectRatio="none" aria-label="2026 丙午 馬">
+          <svg class="cover-art" viewBox="0 0 520 727" preserveAspectRatio="none" aria-label="元旦快樂 · 馬 · 2026">
             <defs>
-              <linearGradient id="gold" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="520" y2="727">
-                <stop offset="0" stop-color="#7a5d24"/>
-                <stop offset="0.28" stop-color="#e2c172"/>
-                <stop offset="0.42" stop-color="#f6e7b0"/>
-                <stop offset="0.6" stop-color="#b48d3e"/>
-                <stop offset="0.82" stop-color="#e0bd6a"/>
-                <stop offset="1" stop-color="#5e461b"/>
+              <!-- organic, slightly "tentacled" halftone blobs -->
+              <filter id="ooze" x="-10%" y="-10%" width="120%" height="120%">
+                <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="11" result="n"/>
+                <feDisplacementMap in="SourceGraphic" in2="n" scale="16" xChannelSelector="R" yChannelSelector="G"/>
+              </filter>
+              <filter id="ink" x="-5%" y="-5%" width="110%" height="110%">
+                <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="1" seed="3" result="n"/>
+                <feDisplacementMap in="SourceGraphic" in2="n" scale="3" xChannelSelector="R" yChannelSelector="G"/>
+              </filter>
+              <linearGradient id="field" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stop-color="#12e01a"/>
+                <stop offset="0.42" stop-color="#c9f8c2"/>
+                <stop offset="0.5" stop-color="#ffffff"/>
+                <stop offset="1" stop-color="#0c0c0c"/>
               </linearGradient>
-              <radialGradient id="vignette" cx="0.5" cy="0.48" r="0.75">
-                <stop offset="0.55" stop-color="#000" stop-opacity="0"/>
-                <stop offset="1" stop-color="#000" stop-opacity="0.65"/>
-              </radialGradient>
-              <radialGradient id="rub" cx="0" cy="0" r="1">
-                <stop offset="0" stop-color="#b9c7b8" stop-opacity="0.22"/>
-                <stop offset="1" stop-color="#b9c7b8" stop-opacity="0"/>
-              </radialGradient>
-              <filter id="cloth" x="0" y="0" width="100%" height="100%">
-                <feTurbulence type="fractalNoise" baseFrequency="0.9 0.035" numOctaves="2" seed="4" result="a"/>
-                <feTurbulence type="fractalNoise" baseFrequency="0.035 0.9" numOctaves="2" seed="9" result="b"/>
-                <feBlend in="a" in2="b" mode="multiply" result="w"/>
-                <feColorMatrix in="w" type="matrix" values="0 0 0 0 0.85  0 0 0 0 0.92  0 0 0 0 0.86  0 0 0 0.26 -0.06"/>
-              </filter>
-              <filter id="grain" x="0" y="0" width="100%" height="100%">
-                <feTurbulence type="fractalNoise" baseFrequency="0.55" numOctaves="3" seed="2"/>
-                <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.9 -0.38"/>
-              </filter>
-              <filter id="foil" x="-5%" y="-5%" width="110%" height="110%">
-                <feTurbulence type="fractalNoise" baseFrequency="0.95" numOctaves="2" seed="7" result="n"/>
-                <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  4 0 0 0 -1.25" result="m"/>
-                <feComposite in="SourceGraphic" in2="m" operator="in" result="worn"/>
-                <feOffset in="worn" dx="0" dy="1.1" result="off"/>
-                <feColorMatrix in="off" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.85 0" result="sh"/>
-                <feOffset in="worn" dx="0" dy="-0.6" result="hi0"/>
-                <feColorMatrix in="hi0" type="matrix" values="0 0 0 0 1  0 0 0 0 0.95  0 0 0 0 0.8  0 0 0 0.35 0" result="hi"/>
-                <feMerge><feMergeNode in="sh"/><feMergeNode in="hi"/><feMergeNode in="worn"/></feMerge>
-              </filter>
-              <filter id="seal" x="-10%" y="-10%" width="120%" height="120%">
-                <feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="2" seed="12" result="n"/>
-                <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  3 0 0 0 -0.7" result="m"/>
-                <feComposite in="SourceGraphic" in2="m" operator="in"/>
-              </filter>
-              <path id="corner" d="M4 64 L4 14 Q4 4 14 4 L64 4 M12 64 L12 18 Q12 12 18 12 L64 12 M22 46 C22 30 30 22 46 22 C56 22 58 32 51 35 C45 38 40 31 45 28 M30 30 m-4 0 a4 4 0 1 0 8 0 a4 4 0 1 0 -8 0 M4 4 m-3 0 l3 -3 l3 3 l-3 3 z"/>
-              <path id="ringText" d="M260 336 m-88 0 a88 88 0 1 1 176 0 a88 88 0 1 1 -176 0"/>
+              <pattern id="grain" width="3" height="3" patternUnits="userSpaceOnUse">
+                <rect width="1" height="1" fill="#000" opacity="0.18"/>
+              </pattern>
             </defs>
 
-            <rect width="520" height="727" fill="#14201b"/>
-            <rect width="520" height="727" filter="url(#cloth)"/>
-            <rect width="520" height="727" filter="url(#grain)"/>
-            <circle cx="0" cy="0" r="160" fill="url(#rub)"/>
-            <circle cx="520" cy="727" r="150" fill="url(#rub)"/>
-            <circle cx="520" cy="0" r="110" fill="url(#rub)"/>
-            <circle cx="0" cy="727" r="110" fill="url(#rub)"/>
-            <rect width="520" height="727" fill="url(#vignette)"/>
+            <rect width="520" height="727" fill="#f3f1ea"/>
+            <g id="blobs" fill="#0a0a0a" filter="url(#ooze)"></g>
 
-            <g fill="none" stroke="url(#gold)" filter="url(#foil)">
-              <rect x="22" y="22" width="476" height="683" stroke-width="2.2"/>
-              <rect x="31" y="31" width="458" height="665" stroke-width="0.8"/>
-              <rect x="40" y="40" width="440" height="647" stroke-width="0.8" stroke-dasharray="1.5 4.5" stroke-linecap="round"/>
-              <g stroke-width="1.6">
-                <use href="#corner" transform="translate(40 40)"/>
-                <use href="#corner" transform="translate(480 40) scale(-1 1)"/>
-                <use href="#corner" transform="translate(40 687) scale(1 -1)"/>
-                <use href="#corner" transform="translate(480 687) scale(-1 -1)"/>
-              </g>
-              <circle cx="260" cy="336" r="132" stroke-width="2"/>
-              <circle cx="260" cy="336" r="125" stroke-width="0.8"/>
-              <circle cx="260" cy="336" r="76" stroke-width="1.6"/>
-              <circle cx="260" cy="336" r="70" stroke-width="0.6"/>
-              <g id="ticks" stroke-width="1.1"></g>
-              <path d="M150 498 L230 498 M290 498 L370 498" stroke-width="0.9"/>
-              <path d="M260 490 l8 8 l-8 8 l-8 -8 z" stroke-width="1"/>
-              <path d="M200 142 L320 142" stroke-width="0.8"/>
+            <rect x="96" y="150" width="346" height="452" fill="url(#field)"/>
+            <rect x="96" y="150" width="346" height="452" fill="url(#grain)"/>
+            <text x="300" y="520" text-anchor="middle" font-family="'Noto Serif SC', 'Songti SC', serif" font-size="330" font-weight="900" fill="#0a0a0a" filter="url(#ink)">馬</text>
+
+            <g font-family="'Noto Serif SC', 'Songti SC', serif" font-weight="900" font-size="46" fill="#ff1e14" stroke="#ffe500" stroke-width="2.4" paint-order="stroke" text-anchor="middle">
+              <text x="58" y="212">元</text>
+              <text x="58" y="264">旦</text>
+              <text x="58" y="316">快</text>
+              <text x="58" y="368">樂</text>
             </g>
-
-            <g fill="url(#gold)" filter="url(#foil)" text-anchor="middle">
-              <text x="260" y="104" font-family="'Cormorant Garamond', 'Times New Roman', serif" font-size="15" letter-spacing="7" font-weight="600">A NEW YEAR BOOK</text>
-              <text x="260" y="132" font-family="'Cormorant Garamond', 'Times New Roman', serif" font-size="12" letter-spacing="5" font-style="italic">form — 01 / 01</text>
-              <text font-family="'Cormorant Garamond', 'Times New Roman', serif" font-size="10.5" letter-spacing="2.6" font-weight="600">
-                <textPath href="#ringText" startOffset="0">ENTER THE YEAR OF THE HORSE · THE HORSE MOVES FIRST · NEW YEAR BEGINS · RESTART ·</textPath>
-              </text>
-              <text x="260" y="374" font-family="'Noto Serif SC', 'Songti SC', 'STSong', serif" font-size="104" font-weight="900">馬</text>
-              <text x="260" y="560" font-family="'Cormorant Garamond', 'Times New Roman', serif" font-size="58" letter-spacing="10" font-weight="600">2026</text>
-              <text x="260" y="598" font-family="'Noto Serif SC', 'Songti SC', serif" font-size="17" letter-spacing="12" font-weight="700">丙午 · 元旦</text>
-              <text x="260" y="650" font-family="'Cormorant Garamond', 'Times New Roman', serif" font-size="10.5" letter-spacing="4">MMXXVI · HAPPY NEW YEAR</text>
-            </g>
-
-            <g filter="url(#seal)" transform="translate(436 618) rotate(-3)">
-              <rect width="34" height="34" rx="2" fill="#b3261e"/>
-              <rect x="3" y="3" width="28" height="28" fill="none" stroke="#f2e2c4" stroke-width="1.2"/>
-              <text x="17" y="25" text-anchor="middle" font-family="'Noto Serif SC', 'Songti SC', serif" font-size="19" font-weight="900" fill="#f2e2c4">午</text>
+            <g font-family="'Helvetica Neue', 'Arial Black', Arial, sans-serif" font-weight="800" fill="#ff1e14" stroke="#ffe500" stroke-width="1.6" paint-order="stroke">
+              <text x="96" y="96" font-size="34" letter-spacing="-0.5">FORM—01/01</text>
+              <text x="96" y="134" font-size="34">2026</text>
+              <text x="442" y="648" font-size="21" text-anchor="end">NEW YEAR BEGINS</text>
+              <text x="442" y="674" font-size="21" text-anchor="end">RESTART</text>
+              <text font-size="13" letter-spacing="1.5" transform="translate(84 160) rotate(90)">ENTER THE YEAR OF THE HORSE</text>
             </g>
           </svg>
-          <div class="cover-sheen"></div>
+          
         </div>
         <div class="front-cover-inside"></div>
         <div class="cover-edge"></div>
@@ -144,7 +93,7 @@
   </div>
 </div>
 <p class="hint">Hover the book to open · move across a page to scan</p>
-<script src="posters.js"></script>
+<script src="horse.js"></script>
 <script src="script.js"></script>
 <script src="background.js"></script>
 </body>
