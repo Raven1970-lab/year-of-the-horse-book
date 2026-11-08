@@ -1,0 +1,254 @@
+/* 2026 New Year Book — optimized 2026-11-08
+   Safari notes: every 3D plane gets an explicit translateZ (Safari sorts
+   preserve-3d planes by depth and ignores z-index), -webkit-backface-visibility
+   everywhere, no clip-path / filter / blend modes inside the 3D context. */
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #eef2f5;
+  font-family: 'Cormorant Garamond', 'Times New Roman', serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+#bg-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.scene {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  -webkit-perspective: 2200px;
+  perspective: 2200px;
+}
+
+.book-wrapper {
+  position: relative;
+  width: 80vw;
+  height: 70vh;
+  -webkit-transform-style: preserve-3d;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.book {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  -webkit-transform-style: preserve-3d;
+  transform-style: preserve-3d;
+  /* closed: shift left by a quarter so the closed cover sits centred */
+  transform: translate3d(-25%, 0, 0) rotateX(10deg);
+  transition: transform 1.1s cubic-bezier(0.45, 0, 0.15, 1);
+}
+.book.open { transform: translate3d(0, 0, 0) rotateX(10deg); }
+
+/* ---------- boards ---------- */
+.board {
+  position: absolute;
+  top: -1.2%;
+  bottom: -1.2%;
+  width: 51%;
+  background: #14201b;
+  border-radius: 3px;
+}
+.back-cover {
+  right: -1%;
+  transform: translateZ(-3px);
+  box-shadow: 0 30px 60px rgba(20, 30, 40, 0.45), 0 8px 18px rgba(20, 30, 40, 0.35);
+}
+.inner-board {
+  left: -1%;
+  transform: translateZ(-3px);
+  opacity: 0;
+  transition: opacity 0.35s ease 0s;
+  box-shadow: 0 30px 60px rgba(20, 30, 40, 0.45), 0 8px 18px rgba(20, 30, 40, 0.35);
+}
+.book.open .inner-board { opacity: 1; transition-delay: 0.45s; }
+
+.spine {
+  position: absolute;
+  top: -1.2%;
+  bottom: -1.2%;
+  left: 50%;
+  width: 18px;
+  margin-left: -9px;
+  background: linear-gradient(to right, #0b120f, #22332b 45%, #2b3f35 55%, #0b120f);
+  transform: translateZ(-2px);
+}
+
+/* ---------- pages ---------- */
+.page {
+  position: absolute;
+  top: 0;
+  width: 50%;
+  height: 100%;
+  -webkit-transform-style: preserve-3d;
+  transform-style: preserve-3d;
+}
+
+.right-page { right: 0; transform: translateZ(0); }
+
+.page-block-edge {
+  position: absolute;
+  top: 0.4%;
+  bottom: 0.4%;
+  right: 0;
+  width: 12px;
+  transform-origin: right center;
+  transform: rotateY(90deg);
+  background: repeating-linear-gradient(to right, #efe8d4 0 1px, #d9d0b8 1px 2px);
+}
+
+.left-page-wrapper {
+  left: 0;
+  transform-origin: right center;
+  transform: translateZ(1px) rotateY(180deg);
+  transition: transform 1.1s cubic-bezier(0.45, 0, 0.15, 1);
+}
+.book.open .left-page-wrapper { transform: translateZ(1px) rotateY(0deg); }
+
+.left-page-content,
+.left-page-back {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+.left-page-content { transform: translateZ(0.5px); }
+.left-page-back {
+  transform: rotateY(180deg) translateZ(0.5px);
+  background: #f3eedf;
+  box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.18);
+}
+
+.page-frame {
+  width: 100%;
+  height: 100%;
+  padding: 18px;
+  background-color: #f3eedf;
+  background-image:
+    radial-gradient(rgba(120, 100, 60, 0.07) 1px, transparent 1px);
+  background-size: 4px 4px;
+  box-shadow: inset 0 0 22px rgba(90, 70, 30, 0.12);
+}
+
+.page-content {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #f4f0e6;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+}
+
+/* gutter shading (plain gradients, no blend modes) */
+.left-page-content::after,
+.right-page::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 18%;
+  height: 100%;
+  pointer-events: none;
+}
+.left-page-content::after { right: 0; background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.16)); }
+.right-page::after { left: 0; background: linear-gradient(to left, transparent, rgba(0, 0, 0, 0.16)); }
+
+.img-top {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  visibility: hidden;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.ui-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* ---------- front cover ---------- */
+.front-cover-wrapper {
+  position: absolute;
+  top: -1.2%;
+  bottom: -1.2%;
+  right: -1%;
+  width: 51%;
+  transform-origin: left center;
+  transform: translateZ(3px) rotateY(0deg);
+  transition: transform 1.1s cubic-bezier(0.45, 0, 0.15, 1);
+  -webkit-transform-style: preserve-3d;
+  transform-style: preserve-3d;
+}
+.book.open .front-cover-wrapper { transform: translateZ(3px) rotateY(-180deg); }
+
+.front-cover-face {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 2px 4px 4px 2px;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  background: #14201b;
+  box-shadow: inset 2px 0 0 rgba(255, 255, 255, 0.05), inset -1px -1px 0 rgba(0, 0, 0, 0.5);
+}
+
+.cover-art { display: block; width: 100%; height: 100%; }
+
+/* light that follows the tilt — a plain gradient, Safari-safe */
+.cover-sheen {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at var(--sx, 30%) var(--sy, 20%),
+    rgba(255, 244, 210, 0.16), rgba(255, 244, 210, 0.04) 30%, transparent 55%);
+}
+
+.cover-edge {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 5px;
+  transform-origin: right center;
+  transform: rotateY(90deg);
+  background: linear-gradient(#1c2b24, #0c1410);
+}
+
+.hint {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 18px;
+  margin: 0;
+  z-index: 2;
+  text-align: center;
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(30, 40, 50, 0.55);
+  pointer-events: none;
+}
